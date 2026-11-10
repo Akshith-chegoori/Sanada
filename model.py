@@ -5,7 +5,9 @@ import numpy as np
 import librosa
 import os
 import tensorflow_hub as hub
+from pathlib import Path
 
+MODEL_PATH = Path(__file__).resolve().parent / "best_sanada_model.pth"
 # --- MODEL ARCHITECTURE ---
 class SourceCountMLP(nn.Module):
     def __init__(self, input_dim=1024, num_classes=32):
@@ -82,10 +84,10 @@ def predict_source_count(waveform):
     with torch.no_grad():
         logits = model(tensor_embs)
         probs = F.softmax(logits, dim=1)
-
         # Prediction and confidence per window
         window_preds = torch.argmax(probs, dim=1).cpu().numpy()
         window_confidences = torch.max(probs, dim=1)[0].cpu().numpy()
+        num_windows = len(window_preds)
 
     # Final prediction via majority vote
     counts = np.bincount(window_preds, minlength=32)
